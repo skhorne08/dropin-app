@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drop In - Train Anywhere</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="m-0">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    function DropInApp() {
+      const [user, setUser] = useState(null);
+      const [authView, setAuthView] = useState('login');
+      const [view, setView] = useState('browse');
+      const [selectedGym, setSelectedGym] = useState(null);
+      const [selectedDay, setSelectedDay] = useState('Monday');
+      const [showMenu, setShowMenu] = useState(false);
+      const [userBookings, setUserBookings] = useState([]);
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [gymTab, setGymTab] = useState('overview');
+
+      const [gymBookings, setGymBookings] = useState([
+        { id: 1, userName: 'Alex M.', class: 'Morning BJJ', time: 'Today, 07:00', status: 'confirmed' },
+        { id: 2, userName: 'Sarah K.', class: 'Evening BJJ', time: 'Today, 18:30', status: 'confirmed' },
+        { id: 3, userName: 'Mike T.', class: 'Muay Thai', time: 'Today, 20:00', status: 'pending' },
+        { id: 4, userName: 'Emma L.', class: 'Morning BJJ', time: 'Tomorrow, 07:00', status: 'confirmed' },
+      ]);
+
+      const stats = { visits: 87, revenue: 2610, growth: 23, rating: 4.8 };
+      const weeklyData = [15, 12, 18, 14, 11, 9, 8];
+
+      const gyms = [
+        { id: 1, name: 'Barcelona Fight Academy', distance: '0.8 km', disciplines: ['BJJ', 'MMA', 'Muay Thai'], rating: 4.8, reviews: 124, credits: 1, image: '🥋', 
+          schedule: [{ day: 'Monday', classes: [
+            { time: '07:00', name: 'Morning BJJ', instructor: 'Carlos Silva', credits: 1, id: 1 },
+            { time: '12:00', name: 'MMA', instructor: 'Mike Torres', credits: 1, id: 2 }
+          ]}]
+        },
+        { id: 2, name: 'Gracie Barra Barcelona', distance: '1.2 km', disciplines: ['BJJ'], rating: 4.9, reviews: 89, credits: 1, image: '🥋',
+          schedule: [{ day: 'Monday', classes: [{ time: '19:00', name: 'All Levels Gi', instructor: 'Professor João', credits: 1, id: 3 }]}]
+        },
+        { id: 3, name: 'Kombat Group BCN', distance: '2.1 km', disciplines: ['Muay Thai', 'Boxing'], rating: 4.7, reviews: 156, credits: 1, image: '🥊',
+          schedule: [{ day: 'Monday', classes: [{ time: '08:00', name: 'Morning Muay Thai', instructor: 'Kru Somchai', credits: 1, id: 4 }]}]
+        }
+      ];
+
+      const login = () => {
+        if (email && password) {
+          const isGym = email.includes('gym');
+          setUser({ id: 1, name: isGym ? 'Barcelona Fight Academy' : email.split('@')[0], email, role: isGym ? 'gym' : 'user', credits: isGym ? 0 : 12, pic: isGym ? '🏋️' : '👤' });
+          if (isGym) setView('gym-dashboard');
+        }
+      };
+
+      const logout = () => { setUser(null); setAuthView('login'); setView('browse'); };
+
+      const book = (gym, cls) => {
+        if (user.credits >= cls.credits) {
+          setUserBookings([...userBookings, { id: Date.now(), gymName: gym.name, class: cls, date: 'Today' }]);
+          setUser({...user, credits: user.credits - cls.credits});
+          alert('Booked!');
+        } else alert('Not enough credits!');
+      };
+
+      if (!user) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 m-4">
+              {authView === 'role-select' && (
+                <div>
+                  <h1 className="text-3xl font-bold text-center mb-2">Welcome to Drop In</h1>
+                  <p className="text-gray-600 text-center mb-8">Choose your account type</p>
+                  <div className="space-y-4">
+                    <button onClick={() => setAuthView('signup-user')} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-semibold hover:bg-indigo-700">👤 I'm a User</button>
+                    <button onClick={() => setAuthView('signup-gym')} className="w-full bg-gray-100 text-gray-900 py-4 rounded-xl font-semibold hover:bg-gray-200">🏋️ I'm a Gym Owner</button>
+                  </div>
+                  <button onClick={() => setAuthView('login')} className="w-full mt-6 text-gray-600 text-sm">Already have an account? <span className="text-indigo-600 font-semibold">Login</span></button>
+                </div>
+              )}
+
+              {authView === 'login' && (
+                <div>
+                  <h1 className="text-3xl font-bold text-center mb-2">Welcome Back</h1>
+                  <p className="text-gray-600 text-center mb-8">Login to your account</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Email</label>
+                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 border rounded-lg" placeholder="your@email.com" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Password</label>
+                      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border rounded-lg" placeholder="••••••••" />
+                    </div>
+                    <button onClick={login} className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700">Login</button>
+                  </div>
+                  <button onClick={() => setAuthView('role-select')} className="w-full mt-6 text-gray-600 text-sm">Don't have an account? <span className="text-indigo-600 font-semibold">Sign up</span></button>
+                  <p className="text-xs text-gray-500 text-center mt-6">Demo: user@test.com or gym@test.com</p>
+                </div>
+              )}
+
+              {authView === 'signup-user' && (
+                <div>
+                  <button onClick={() => setAuthView('role-select')} className="text-gray-600 mb-4">← Back</button>
+                  <h1 className="text-2xl font-bold mb-2">Create User Account</h1>
+                  <p className="text-gray-600 mb-6">Start training</p>
+                  <div className="space-y-4">
+                    <input type="text" placeholder="Full Name" className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="email" placeholder="Email" className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="password" placeholder="Password" className="w-full px-4 py-3 border rounded-lg" />
+                    <button onClick={() => setUser({ id: 1, name: 'Demo User', email: 'user@test.com', role: 'user', credits: 5, pic: '👤' })} className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold">Create Account</button>
+                  </div>
+                </div>
+              )}
+
+              {authView === 'signup-gym' && (
+                <div>
+                  <button onClick={() => setAuthView('role-select')} className="text-gray-600 mb-4">← Back</button>
+                  <h1 className="text-2xl font-bold mb-2">Create Gym Account</h1>
+                  <p className="text-gray-600 mb-6">Join our network</p>
+                  <div className="space-y-4">
+                    <input type="text" placeholder="Gym Name" className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="text" placeholder="Owner Name" className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="email" placeholder="Email" className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="password" placeholder="Password" className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="text" placeholder="Address" className="w-full px-4 py-3 border rounded-lg" />
+                    <button onClick={() => { setUser({ id: 1, name: 'Barcelona Fight Academy', email: 'gym@test.com', role: 'gym', pic: '🏋️' }); setView('gym-dashboard'); }} className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold">Create Account</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      if (user.role === 'gym') {
+        return (
+          <div className="min-h-screen bg-gray-50">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-8">
+              <div className="max-w-7xl mx-auto">
+                <div className="flex justify-between items-center mb-8">
+                  <div>
+                    <h1 className="text-3xl font-bold">{user.name}</h1>
+                    <p className="opacity-90">Owner Dashboard</p>
+                  </div>
+                  <button onClick={logout} className="bg-white/20 px-4 py-2 rounded-lg">Logout</button>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white/15 backdrop-blur rounded-xl p-6">
+                    <div className="text-sm opacity-90">Monthly Visits</div>
+                    <div className="text-4xl font-bold mt-2">{stats.visits}</div>
+                    <div className="text-sm text-green-300">+{stats.growth}%</div>
+                  </div>
+                  <div className="bg-white/15 backdrop-blur rounded-xl p-6">
+                    <div className="text-sm opacity-90">Revenue</div>
+                    <div className="text-4xl font-bold mt-2">€{stats.revenue}</div>
+                  </div>
+                  <div className="bg-white/15 backdrop-blur rounded-xl p-6">
+                    <div className="text-sm opacity-90">Rating</div>
+                    <div className="text-4xl font-bold mt-2">⭐ {stats.rating}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border-b">
+              <div className="max-w-7xl mx-auto flex gap-8 px-8">
+                {['overview', 'bookings', 'analytics'].map(tab => (
+                  <button key={tab} onClick={() => setGymTab(tab)} className={`py-4 font-medium capitalize ${gymTab === tab ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-600'}`}>{tab}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto p-8">
+              {gymTab === 'overview' && (
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-white rounded-xl p-6 shadow">
+                    <h2 className="text-xl font-bold mb-4">Today's Bookings</h2>
+                    {gymBookings.filter(b => b.time.includes('Today')).map(b => (
+                      <div key={b.id} className="bg-gray-50 rounded-lg p-4 mb-3">
+                        <div className="font-semibold">{b.userName}</div>
+                        <div className="text-sm text-gray-600">{b.class}</div>
+                        <div className="text-xs text-gray-500">{b.time}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-white rounded-xl p-6 shadow">
+                    <h2 className="text-xl font-bold mb-4">Weekly Performance</h2>
+                    <div className="flex items-end justify-between h-48">
+                      {weeklyData.map((val, i) => (
+                        <div key={i} className="flex-1 flex flex-col items-center mx-1">
+                          <div className="w-full bg-indigo-600 rounded-t text-white text-xs flex items-center justify-center font-bold" style={{height: `${(val/20)*100}%`}}>{val}</div>
+                          <span className="text-xs mt-2">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {gymTab === 'bookings' && (
+                <div className="bg-white rounded-xl p-6 shadow">
+                  <h2 className="text-xl font-bold mb-4">All Bookings</h2>
+                  {gymBookings.map(b => (
+                    <div key={b.id} className="bg-gray-50 rounded-lg p-4 mb-3 flex justify-between items-center">
+                      <div>
+                        <div className="font-semibold">{b.userName}</div>
+                        <div className="text-sm text-gray-600">{b.class}</div>
+                        <div className="text-xs text-gray-500">{b.time}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        {b.status === 'pending' && (
+                          <>
+                            <button onClick={() => setGymBookings(gymBookings.map(x => x.id === b.id ? {...x, status: 'confirmed'} : x))} className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm">Approve</button>
+                            <button onClick={() => setGymBookings(gymBookings.filter(x => x.id !== b.id))} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm">Decline</button>
+                          </>
+                        )}
+                        {b.status === 'confirmed' && <span className="bg-green-100 text-green-700 px-4 py-2 rounded-lg text-sm">✓ Confirmed</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {gymTab === 'analytics' && (
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="bg-white rounded-xl p-6 shadow">
+                    <div className="text-sm text-gray-600 mb-2">Avg per Visit</div>
+                    <div className="text-3xl font-bold text-indigo-600">€30</div>
+                  </div>
+                  <div className="bg-white rounded-xl p-6 shadow">
+                    <div className="text-sm text-gray-600 mb-2">New Users</div>
+                    <div className="text-3xl font-bold text-indigo-600">34</div>
+                  </div>
+                  <div className="bg-white rounded-xl p-6 shadow">
+                    <div className="text-sm text-gray-600 mb-2">Return Rate</div>
+                    <div className="text-3xl font-bold text-indigo-600">61%</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="h-screen max-w-md mx-auto bg-white flex flex-col">
+          <div className="bg-indigo-600 text-white p-4">
+            <div className="flex justify-between items-center">
+              <h1 className="text-xl font-bold">Drop In</h1>
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 px-3 py-1.5 rounded-full text-sm font-semibold">{user.credits} credits</div>
+                <button onClick={() => setShowMenu(!showMenu)} className="text-2xl">☰</button>
+              </div>
+            </div>
+          </div>
+
+          {showMenu && (
+            <div className="absolute inset-0 bg-black/50 z-50" onClick={() => setShowMenu(false)}>
+              <div className="absolute right-0 top-0 bottom-0 w-72 bg-white p-6" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between mb-6">
+                  <h2 className="text-xl font-bold">Menu</h2>
+                  <button onClick={() => setShowMenu(false)} className="text-2xl">×</button>
+                </div>
+                <div className="flex items-center gap-3 mb-6 pb-6 border-b">
+                  <div className="text-4xl">{user.pic}</div>
+                  <div>
+                    <p className="font-semibold">{user.name}</p>
+                    <p className="text-sm text-gray-600">{user.email}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <button onClick={() => { setView('profile'); setShowMenu(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">My Profile</button>
+                  <button onClick={() => { setView('bookings'); setShowMenu(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">My Bookings</button>
+                  <button onClick={() => { setView('credits'); setShowMenu(false); }} className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">Buy Credits</button>
+                  <button onClick={logout} className="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 text-red-600 mt-4">Logout</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto p-4">
+            {view === 'browse' && (
+              <div>
+                <h2 className="text-lg font-bold mb-4">Nearby Gyms</h2>
+                {gyms.map(gym => (
+                  <div key={gym.id} onClick={() => { setSelectedGym(gym); setView('detail'); }} className="bg-white rounded-xl shadow p-4 mb-3 cursor-pointer border hover:shadow-md">
+                    <div className="flex gap-3">
+                      <div className="text-5xl">{gym.image}</div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold mb-1">{gym.name}</h3>
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                          <span>⭐ {gym.rating}</span>
+                          <span className="text-gray-500">({gym.reviews})</span>
+                          <span>•</span>
+                          <span className="text-gray-600">📍 {gym.distance}</span>
+                        </div>
+                        <div className="flex gap-1 mb-2">
+                          {gym.disciplines.map((d, i) => <span key={i} className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs rounded-full">{d}</span>)}
+                        </div>
+                        <div className="text-indigo-600 font-semibold text-sm">{gym.credits} credit/class</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {view === 'detail' && selectedGym && (
+              <div>
+                <button onClick={() => setView('browse')} className="text-indigo-600 mb-4">← Back</button>
+                <div className="text-6xl mb-4">{selectedGym.image}</div>
+                <h1 className="text-2xl font-bold mb-2">{selectedGym.name}</h1>
+                <div className="text-sm text-gray-600 mb-4">⭐ {selectedGym.rating} ({selectedGym.reviews}) • 📍 {selectedGym.distance}</div>
+                
+                <h2 className="text-lg font-bold mb-3">Schedule</h2>
+                <div className="space-y-3">
+                  {selectedGym.schedule[0].classes.map(cls => (
+                    <div key={cls.id} className="bg-white rounded-lg p-4 shadow border">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-bold">🕐 {cls.time}</span>
+                      </div>
+                      <h3 className="font-semibold mb-1">{cls.name}</h3>
+                      <p className="text-sm text-gray-600 mb-3">{cls.instructor}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-indigo-600 font-semibold">{cls.credits} credit</span>
+                        <button onClick={() => book(selectedGym, cls)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Book</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {view === 'profile' && (
+              <div>
+                <h1 className="text-2xl font-bold mb-6">My Profile</h1>
+                <div className="bg-white rounded-xl shadow p-6 border">
+                  <div className="text-6xl mb-6">{user.pic}</div>
+                  <div className="space-y-4">
+                    <div><label className="text-sm font-medium text-gray-600">Name</label><p className="text-lg font-semibold">{user.name}</p></div>
+                    <div><label className="text-sm font-medium text-gray-600">Email</label><p className="text-lg">{user.email}</p></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {view === 'bookings' && (
+              <div>
+                <h1 className="text-2xl font-bold mb-6">My Bookings</h1>
+                {userBookings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">📅</div>
+                    <p className="text-gray-600 mb-4">No bookings yet</p>
+                    <button onClick={() => setView('browse')} className="text-indigo-600 font-medium">Browse Gyms</button>
+                  </div>
+                ) : (
+                  userBookings.map(b => (
+                    <div key={b.id} className="bg-white rounded-xl shadow p-4 border mb-3">
+                      <h3 className="font-bold">{b.gymName}</h3>
+                      <p className="text-gray-700">{b.class.name}</p>
+                      <div className="text-sm text-gray-600">{b.date} • {b.class.time}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {view === 'credits' && (
+              <div>
+                <h1 className="text-2xl font-bold mb-6">Buy Credits</h1>
+                <div className="bg-white rounded-xl shadow p-6 border-2 border-indigo-600">
+                  <div className="flex justify-between mb-4">
+                    <div><h3 className="text-2xl font-bold">10 Credits</h3><p className="text-gray-600">Most popular</p></div>
+                    <div className="text-right"><p className="text-3xl font-bold text-indigo-600">€80</p><p className="text-sm text-gray-600">€8/credit</p></div>
+                  </div>
+                  <button className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold">Purchase</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<DropInApp />, document.getElementById('root'));
+  </script>
+</body>
+</html>
